@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mingo Calculetor</title>
+        <link rel="icon" type="image/png" href="Icon.png">
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load MathJax for rendering math equations -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Load Inter Font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* Dark background from images */
+            color: #e0e0f0;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal scrolling on mobile */
+        }
+        
+        /* MOBILE-FIRST: App container takes up full screen space */
+        #app-container {
+            width: 100%;
+            min-height: 100vh; /* Full viewport height for app-like feel */
+            padding: 0;
+            margin: 0;
+            background-color: #1a1a2e; /* Use body color for seamless background */
+            box-shadow: none;
+        }
+
+        /* Desktop/Tablet (sm breakpoint and above) - Revert to centered card layout */
+        @media (min-width: 640px) {
+            #app-container {
+                max-width: 600px;
+                min-height: 80vh;
+                margin: 20px auto;
+                background-color: #2a2a44;
+                border-radius: 12px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+                padding: 16px;
+            }
+        }
+        
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2a2a44;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b4b6b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6c6c8c;
+        }
+        
+        .tab-button {
+            transition: all 0.2s ease-in-out;
+            color: #e0e0f0;
+        }
+        
+        /* New CSS for icon buttons */
+        .tab-button.active {
+            background-color: #4CAF50; /* Green highlight for active tab */
+            color: #1a1a2e; /* Dark icon color on green background */
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); /* Subtle glow */
+            border-radius: 9999px; /* Fully rounded */
+        }
+        .tab-button:not(.active) svg {
+            color: #e0e0f0; /* White/light gray icon color */
+        }
+
+        /* Solve Button Styles */
+        .solve-button {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px #10ac84; /* Shadow for 3D effect */
+        }
+        .solve-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #10ac84;
+        }
+        .text-input, #canvas-container {
+            border: 2px solid #3b3b64;
+            transition: all 0.2s;
+        }
+        
+        .text-input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.5);
+        }
+
+        /* Canvas Button Styles */
+        .canvas-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+            color: white;
+            box-shadow: 0 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .canvas-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-green { background-color: #4CAF50; }
+        .btn-red { background-color: #f44336; }
+        .btn-yellow { background-color: #ff9800; }
+        .btn-blue { background-color: #2196F3; }
+
+        .btn-green:hover { background-color: #43a047; }
+        .btn-red:hover { background-color: #e53935; }
+        .btn-yellow:hover { background-color: #fb8c00; }
+        .btn-blue:hover { background-color: #1e88e5; }
+        
+        /* Details Summary Styling */
+        details summary {
+            list-style: none; /* Hide default marker */
+        }
+        details summary::-webkit-details-marker {
+            display: none; /* Hide marker on WebKit browsers */
+        }
+        details summary:before {
+            content: '+';
+            display: inline-block;
+            margin-right: 0.5rem;
+            transition: transform 0.2s;
+            font-weight: bold;
+        }
+        details[open] summary:before {
+            content: '−';
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container" class="space-y-4">
+    
+    <!-- Tab Navigation (Icon-Only, as per demo) -->
+    <div class="flex justify-center space-x-6 py-2 bg-[#1a1a2e] rounded-b-xl shadow-lg sm:rounded-xl sm:mb-4">
+        <!-- Text/Grid Icon (Similar to 1.jpg) -->
+        <button id="tab-text" class="tab-button p-3 rounded-full" onclick="switchTab('text')" title="টেক্সট মোড">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+        </button>
+        <!-- Sketch/Pencil Icon (Similar to 2.jpg) -->
+        <button id="tab-sketch" class="tab-button p-3 rounded-full" onclick="switchTab('sketch')" title="স্মার্ট বোর্ড">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                <path d="m15 5 4 4"/>
+            </svg>
+        </button>
+        <!-- History/Clock Icon (Similar to 3.jpg) -->
+        <button id="tab-history" class="tab-button p-3 rounded-full" onclick="switchTab('history')" title="সমাধানের ইতিহাস">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Main Content Area - Full width, appropriate padding -->
+    <div id="content-area" class="p-4 sm:p-4 bg-[#2a2a44] rounded-xl shadow-inner min-h-[400px]">
+        
+        <!-- Tab: Text Mode -->
+        <div id="tab-content-text" class="space-y-6">
+            <p class="text-sm font-medium text-gray-400">**টেক্সট মোড:** যেকোনো জটিল গাণিতিক সমীকরণ বা সমস্যা টাইপ করে ধাপে ধাপে সমাধান করুন।</p>
+            
+            <textarea id="math-input" class="text-input w-full p-4 h-32 bg-[#2a2a44] text-white rounded-xl resize-none focus:outline-none" placeholder="সমস্যাটি লিখুন, যেমন: $2+2$ অথবা $4x-2=2$"></textarea>
+            
+            <button id="solve-button-text" class="solve-button w-full py-3 bg-green-500 text-white font-bold rounded-xl text-lg hover:bg-green-600" onclick="solveTextMath()">
+                সমাধান করো
+            </button>
+            
+            <!-- Output and Loading Area -->
+            <div id="output-area-text" class="pt-4 space-y-4">
+                <div id="text-loading" class="hidden text-center text-green-400 font-semibold">
+                    সমস্যার সমাধান করা হচ্ছে...
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mt-2"></div>
+                </div>
+                <!-- This is where the solution will appear (Short Answer + Details) -->
+                <div id="text-solution" class="bg-[#3b3b64] p-4 rounded-xl text-gray-200 min-h-[50px] whitespace-pre-wrap">
+                    <p class="text-center text-gray-400">সমাধান এখানে দেখানো হবে।</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Sketch Mode -->
+        <div id="tab-content-sketch" class="hidden space-y-4">
+            <p class="text-sm font-medium text-gray-400">**স্মার্ট বোর্ড:** আপনার হাতে লেখা গণিত সমস্যাটি এখানে আঁকুন। আমরা স্ক্যান করে সমাধান করে দেব।</p>
+            
+            <div id="canvas-container" class="relative bg-white rounded-xl shadow-lg border-2 border-dashed border-gray-500">
+                <canvas id="sketch-canvas" class="w-full h-[300px] rounded-xl cursor-crosshair"></canvas>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <label for="pen-size" class="text-sm font-medium text-white">আকার:</label>
+                <input type="range" id="pen-size" min="1" max="10" value="5" class="flex-grow h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                <span id="pen-size-value" class="text-white font-bold">5</span>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4">
+                <button class="canvas-btn btn-blue" onclick="saveCanvas()">সেভ</button>
+                <button class="canvas-btn btn-red" onclick="resetCanvas()">মুছে ফেলো</button>
+                <button id="solve-button-sketch" class="canvas-btn btn-yellow" onclick="solveSketchMath()">স্ক্যান ও সমাধান</button>
+            </div>
+
+            <!-- Output and Loading Area for Sketch -->
+            <div id="output-area-sketch" class="pt-4 space-y-4">
+                <div id="sketch-loading" class="hidden text-center text-green-400 font-semibold">
+                    হাতে লেখা স্ক্যান ও সমাধান করা হচ্ছে...
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mt-2"></div>
+                </div>
+                <div id="sketch-solution" class="bg-[#3b3b64] p-4 rounded-xl text-gray-200 min-h-[50px] whitespace-pre-wrap">
+                    <p class="text-center text-gray-400">সমাধান এখানে দেখানো হবে।</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: History -->
+        <div id="tab-content-history" class="hidden space-y-4">
+            <h2 class="text-xl font-bold mb-4">সমাধানের ইতিহাস</h2>
+            <div id="history-list" class="space-y-3">
+                <p id="history-placeholder" class="text-center text-gray-500">কোন ইতিহাস পাওয়া যায়নি।</p>
+                <!-- History items will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custom Modal for Messages/Errors -->
+    <div id="custom-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#2a2a44] p-6 rounded-xl shadow-2xl max-w-sm w-full space-y-4">
+            <h3 id="modal-title" class="text-xl font-bold text-red-400">ত্রুটি</h3>
+            <p id="modal-message" class="text-gray-200">একটি অজানা ত্রুটি ঘটেছে।</p>
+            <button class="w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600" onclick="closeModal()">বন্ধ করুন</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Firebase and Main App Logic -->
+<script type="module">
+    // Global variables (MUST be used for the Canvas environment)
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        apiKey: "AIzaSyCO53oecT_sml7NN85XfIjbwPXP1ZUTrMw",
+        authDomain: "sketch-calculetor.firebaseapp.com",
+        projectId: "sketch-calculetor",
+        storageBucket: "sketch-calculetor.firebasestorage.app",
+        messagingSenderId: "1014300487273",
+        appId: "1:1014300487273:web:363df2873ee758dc31bcf8"
+    };
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    let app, db, auth, userId = null;
+    let isAuthReady = false;
+    let currentTab = 'text'; // Default tab
+
+    const API_MODEL_TEXT = "gemini-2.5-flash-preview-09-2025";
+    const API_MODEL_VISION = "gemini-2.5-flash-preview-09-2025";
+    const API_KEY = "AIzaSyC6oT4eGaAGpplH9fDfA4Ts9TtC1e0Y4x4"; // Use provided API key (will be injected by Canvas)
+
+    // --- Utility Functions ---
+
+    /**
+     * Shows a custom modal message instead of alert/confirm.
+     */
+    function showModal(title, message, isError = true) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').innerHTML = message;
+        
+        const titleEl = document.getElementById('modal-title');
+        titleEl.classList.toggle('text-red-400', isError);
+        titleEl.classList.toggle('text-green-400', !isError);
+        
+        document.getElementById('custom-modal').classList.remove('hidden');
+        document.getElementById('custom-modal').classList.add('flex');
+    }
+
+    /**
+     * Closes the custom modal.
+     */
+    function closeModal() {
+        document.getElementById('custom-modal').classList.remove('flex');
+        document.getElementById('custom-modal').classList.add('hidden');
+    }
+
+    /**
+     * Converts a Canvas to a Base64 image (JPEG).
+     */
+    function getCanvasBase64(canvas) {
+        // Draw the canvas content onto a white background for better recognition
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        
+        // Fill background with white
+        tempCtx.fillStyle = '#ffffff';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Draw the existing canvas content
+        tempCtx.drawImage(canvas, 0, 0);
+
+        // Get the base64 data without the 'data:image/jpeg;base64,' prefix
+        return tempCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    }
+
+    /**
+     * Standard Exponential Backoff for API calls
+     */
+    async function fetchWithBackoff(url, options, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 429 && i < retries - 1) {
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    console.warn(`Rate limit hit. Retrying in ${Math.round(delay / 1000)}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    continue;
+                }
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}. Body: ${errorBody}`);
+                }
+                return response;
+            } catch (error) {
+                if (i === retries - 1) throw error;
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                console.warn(`Fetch error. Retrying in ${Math.round(delay / 1000)}s...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+        throw new Error("API call failed after multiple retries.");
+    }
+
+
+    // --- Firebase & Auth Setup ---
+
+    /**
+     * Initializes Firebase and sets up authentication listener.
+     */
+    async function initFirebase() {
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Set up Auth State Listener
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Firebase Auth Ready. User ID:", userId);
+                    isAuthReady = true;
+                    loadHistoryListener();
+                } else {
+                    // Try to sign in with custom token or anonymously
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Error during sign-in:", error);
+                        showModal("Firebase Auth ত্রুটি", "সাইন-ইন করতে ব্যর্থ: " + error.message, true);
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Firebase Initialization Error:", error);
+            showModal("Firebase Initialisation Error", "Firebase শুরু করতে সমস্যা হয়েছে।", true);
+        }
+    }
+
+    /**
+     * Saves the problem and solution to Firestore.
+     */
+    async function saveToHistory(problem, shortSolution, detailedSolution, mode) {
+        if (!userId || !db) {
+            console.error("Cannot save: Firebase or User not ready.");
+            return;
+        }
+
+        // Use the correct path structure for private user data
+        const historyPath = `artifacts/${appId}/users/${userId}/calculator_history`;
+        const historyCollection = collection(db, historyPath);
+
+        try {
+            await addDoc(historyCollection, {
+                problem: problem,
+                short: shortSolution, 
+                detailed: detailedSolution, 
+                mode: mode,
+                timestamp: serverTimestamp()
+            });
+            console.log("Saved to history successfully.");
+        } catch (error) {
+            console.error("Error saving to Firestore:", error);
+        }
+    }
+
+    /**
+     * Sets up a real-time listener for history data.
+     */
+    function loadHistoryListener() {
+        if (!isAuthReady || !userId || !db) return;
+
+        const historyPath = `artifacts/${appId}/users/${userId}/calculator_history`;
+        // Order by timestamp descending to show the newest entries first
+        const q = query(collection(db, historyPath), orderBy("timestamp", "desc"));
+        
+        // Listen for real-time updates
+        onSnapshot(q, (snapshot) => {
+            const historyListEl = document.getElementById('history-list');
+            historyListEl.innerHTML = ''; // Clear existing list
+            
+            if (snapshot.empty) {
+                historyListEl.innerHTML = `<p id="history-placeholder" class="text-center text-gray-500">কোন ইতিহাস পাওয়া যায়নি।</p>`;
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const date = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('bn-BD') : 'তারিখ নেই';
+                
+                const item = document.createElement('div');
+                item.className = 'bg-[#3b3b64] p-4 rounded-xl shadow-md space-y-2';
+                
+                // Use the new short and detailed fields
+                const shortAns = data.short || 'সমাধান নেই';
+                const detailedAns = data.detailed || 'কোন বিস্তারিত ধাপ পাওয়া যায়নি।';
+                const identifiedProblem = data.problem || 'সমস্যা সনাক্ত করা যায়নি';
+
+                item.innerHTML = `
+                    <p class="text-sm font-light text-gray-400">মোড: ${data.mode === 'text' ? 'টেক্সট' : 'স্কেচ'} | ${date}</p>
+                    <p class="font-semibold text-white break-words mb-2">প্রশ্ন: ${identifiedProblem}</p>
+                    <div class="text-lg font-bold text-green-400 mb-2">উত্তর: ${shortAns}</div>
+
+                    <!-- Only show details if there's actual content beyond the placeholder text -->
+                    ${detailedAns !== 'কোন বিস্তারিত ধাপ পাওয়া যায়নি।' ? `
+                    <details class="bg-[#2a2a44] p-3 rounded-lg cursor-pointer">
+                        <summary class="font-semibold text-gray-300 hover:text-white transition-colors">বিস্তারিত ধাপ দেখুন</summary>
+                        <div class="mt-2 text-sm text-gray-200 whitespace-pre-wrap">
+                            ${detailedAns}
+                        </div>
+                    </details>` : `<p class="text-xs text-gray-500 italic">কোন বিস্তারিত ধাপের প্রয়োজন নেই।</p>`}
+                `;
+                historyListEl.appendChild(item);
+                
+                // Re-render MathJax content in the new element
+                MathJax.typeset([item]);
+            });
+
+            MathJax.typesetPromise([historyListEl]).catch((err) => console.error("MathJax error:", err));
+        }, (error) => {
+            console.error("History listener error:", error);
+            showModal("ইতিহাস লোড ত্রুটি", "ইতিহাস লোড করতে সমস্যা হয়েছে: " + error.message, true);
+        });
+    }
+
+
+    // --- Gemini API Logic ---
+
+    // Strict prompt to enforce concise short answer and detailed steps only when needed
+    const systemPromptTemplate = `Act as an expert math solver and tutor. Your primary goal is to solve the user's complex mathematical problem.
+
+**FORMATTING RULES (STRICTLY FOLLOW THIS):**
+1.  **Short Answer:** Provide the final, most concise answer immediately on the first line. For simple arithmetic (e.g., 2+2), the final answer should be the entire solution (e.g., $2+2=4$).
+2.  Follow the first line with a newline and the separator: ---DETAILS---
+3.  **Detailed Explanation:** After the separator, if the problem is a complex equation or involves multiple steps (e.g., algebra, calculus), provide the full, step-by-step solution. If the problem is simple (like $2+2$), you MUST state "কোন বিস্তারিত ধাপের প্রয়োজন নেই" (No detailed steps needed).
+4.  Format all mathematical notation using LaTeX/MathJax syntax (e.g., $x^2 + 2x = 0$, $\\int \\cos(x) dx$).
+5.  The entire response MUST be in Bengali.
+6.  Do NOT include any introduction, conclusion, or conversational text outside of the short answer and detailed explanation sections.`;
+
+
+    /**
+     * Solves a text-based math problem using the Gemini API.
+     */
+    async function solveTextMath() {
+        const inputEl = document.getElementById('math-input');
+        const problem = inputEl.value.trim();
+        const solutionEl = document.getElementById('text-solution');
+        const loadingEl = document.getElementById('text-loading');
+        const solveBtn = document.getElementById('solve-button-text');
+        
+        if (problem === '') {
+            showModal("ইনপুট প্রয়োজন", "অনুগ্রহ করে সমীকরণ বা গাণিতিক সমস্যাটি লিখুন।", false);
+            return;
+        }
+
+        loadingEl.classList.remove('hidden');
+        solutionEl.innerHTML = '<p class="text-center text-gray-400">সমাধান এখানে দেখানো হবে।</p>'; // Clear previous solution
+        solveBtn.disabled = true;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL_TEXT}:generateContent?key=${API_KEY}`;
+        
+        const userQuery = `এই সমস্যাটি ধাপে ধাপে সমাধান করে দাও: ${problem}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: userQuery }] }],
+            tools: [{ "google_search": {} }], 
+            systemInstruction: { parts: [{ text: systemPromptTemplate }] },
+        };
+
+        try {
+            const response = await fetchWithBackoff(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "সমাধান করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।";
+
+            // Split the response into short and detailed parts
+            const [shortSolutionText, detailedSolutionText] = text.split('\n---DETAILS---\n', 2);
+            
+            const shortSolution = shortSolutionText.trim();
+            const detailedSolution = detailedSolutionText ? detailedSolutionText.trim() : 'কোন বিস্তারিত ধাপ পাওয়া যায়নি।';
+            
+            // Check if details are just the placeholder
+            const showDetails = detailedSolution.includes("কোন বিস্তারিত ধাপের প্রয়োজন নেই") ? false : true;
+
+            // Update UI with short answer and collapsible details
+            solutionEl.innerHTML = `
+                <div class="text-lg font-bold text-green-400 mb-3">${shortSolution}</div>
+                ${showDetails ? `
+                <details class="bg-[#2a2a44] p-3 rounded-lg cursor-pointer">
+                    <summary class="font-semibold text-gray-300 hover:text-white transition-colors">বিস্তারিত ধাপ দেখুন</summary>
+                    <div class="mt-2 text-sm text-gray-200 whitespace-pre-wrap">
+                        ${detailedSolution}
+                    </div>
+                </details>` : `<p class="text-xs text-gray-500 italic">কোন বিস্তারিত ধাপের প্রয়োজন নেই।</p>`}
+            `;
+
+            // Save to history (even if no detailed steps are provided, the short answer is valuable)
+            saveToHistory(problem, shortSolution, detailedSolution, 'text');
+            
+            MathJax.typesetPromise([solutionEl]).catch((err) => console.error("MathJax error:", err));
+
+        } catch (error) {
+            console.error("Gemini API Error (Text Mode):", error);
+            solutionEl.innerHTML = `<span class="text-red-400">API ত্রুটি:</span> ${error.message}`;
+        } finally {
+            loadingEl.classList.add('hidden');
+            solveBtn.disabled = false;
+        }
+    }
+    
+    /**
+     * Solves a sketched math problem using the Gemini Vision API.
+     */
+    async function solveSketchMath() {
+        const canvasEl = document.getElementById('sketch-canvas');
+        const base64Image = getCanvasBase64(canvasEl);
+        const solutionEl = document.getElementById('sketch-solution');
+        const loadingEl = document.getElementById('sketch-loading');
+        const solveBtn = document.getElementById('solve-button-sketch');
+        
+        // Basic check to see if anything was drawn
+        if (base64Image.length < 1000) { // arbitrary length check
+            showModal("স্কেচ প্রয়োজন", "অনুগ্রহ করে স্মার্ট বোর্ডে কিছু আঁকুন বা লিখুন।", false);
+            return;
+        }
+
+        loadingEl.classList.remove('hidden');
+        solutionEl.innerHTML = '<p class="text-center text-gray-400">সমাধান এখানে দেখানো হবে।</p>'; // Clear previous solution
+        solveBtn.disabled = true;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL_VISION}:generateContent?key=${API_KEY}`;
+        
+        const userPrompt = `এই হাতে লেখা গাণিতিক সমস্যাটি স্ক্যান করে ধাপে ধাপে সমাধান করে দাও।`;
+        
+        const payload = {
+            contents: [{
+                role: "user",
+                parts: [
+                    { text: userPrompt },
+                    {
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: base64Image
+                        }
+                    }
+                ]
+            }],
+            systemInstruction: { parts: [{ text: systemPromptTemplate }] },
+        };
+        
+        try {
+            const response = await fetchWithBackoff(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            const fullText = result.candidates?.[0]?.content?.parts?.[0]?.text || "সমাধান করতে সমস্যা হয়েছে। হাতে লেখাটি স্পষ্ট করে আবার চেষ্টা করুন।";
+            
+            // Assume the first line is the problem statement and the next line is the short answer.
+            // Split the response by the separator.
+            const parts = fullText.split('\n---DETAILS---\n', 2);
+            
+            let shortSolution = "সমাধান নেই";
+            let detailedSolution = "কোন বিস্তারিত ধাপ পাওয়া যায়নি।";
+            let problemStatement = "হাতে লেখা সমস্যা";
+
+            if (parts.length === 2) {
+                // The part before ---DETAILS--- contains the problem and the short answer.
+                const preDetails = parts[0].trim().split('\n');
+                
+                // Try to extract the problem statement (which usually comes first in the response)
+                problemStatement = preDetails.length > 0 ? preDetails[0].trim() : 'হাতে লেখা সমস্যা';
+                
+                // The short solution is the next line
+                shortSolution = preDetails.length > 1 ? preDetails[1].trim() : preDetails[0].trim();
+                
+                detailedSolution = parts[1].trim();
+            } else {
+                 // Fallback if the strict format isn't followed
+                 shortSolution = fullText.split('\n')[0].trim();
+                 detailedSolution = "কোন বিস্তারিত ধাপ পাওয়া যায়নি।";
+            }
+            
+            const showDetails = detailedSolution.includes("কোন বিস্তারিত ধাপের প্রয়োজন নেই") ? false : true;
+
+            // Update UI with short answer and collapsible details
+            solutionEl.innerHTML = `
+                <div class="text-sm font-medium text-gray-400 mb-2">সনাক্তকৃত প্রশ্ন: ${problemStatement}</div>
+                <div class="text-lg font-bold text-green-400 mb-3">${shortSolution}</div>
+                ${showDetails ? `
+                <details class="bg-[#2a2a44] p-3 rounded-lg cursor-pointer">
+                    <summary class="font-semibold text-gray-300 hover:text-white transition-colors">বিস্তারিত ধাপ দেখুন</summary>
+                    <div class="mt-2 text-sm text-gray-200 whitespace-pre-wrap">
+                        ${detailedSolution}
+                    </div>
+                </details>` : `<p class="text-xs text-gray-500 italic">কোন বিস্তারিত ধাপের প্রয়োজন নেই।</p>`}
+            `;
+
+            // Save to history
+            saveToHistory(problemStatement, shortSolution, detailedSolution, 'sketch');
+
+            MathJax.typesetPromise([solutionEl]).catch((err) => console.error("MathJax error:", err));
+
+        } catch (error) {
+            console.error("Gemini API Error (Sketch Mode):", error);
+            solutionEl.innerHTML = `<span class="text-red-400">API ত্রুটি:</span> ${error.message}`;
+        } finally {
+            loadingEl.classList.add('hidden');
+            solveBtn.disabled = false;
+        }
+    }
+
+
+    // --- UI/Canvas Logic ---
+
+    function switchTab(tabId) {
+        currentTab = tabId;
+        // Hide all content areas
+        document.querySelectorAll('[id^="tab-content-"]').forEach(el => el.classList.add('hidden'));
+        
+        // Deactivate all tab buttons and remove color/active state
+        document.querySelectorAll('.tab-button').forEach(el => {
+            el.classList.remove('active');
+            // Reset icon color
+            el.querySelector('svg').style.color = '#e0e0f0';
+        });
+        
+        // Show the selected content area
+        document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+        
+        // Activate the selected tab button and apply color
+        const activeBtn = document.getElementById(`tab-${tabId}`);
+        activeBtn.classList.add('active');
+        activeBtn.querySelector('svg').style.color = '#1a1a2e'; // Dark color for icon on green background
+
+        // Special logic for canvas setup
+        if (tabId === 'sketch') {
+            setupCanvas();
+        }
+    }
+
+    // --- Canvas Drawing Logic ---
+    let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0;
+    let penSize = 5;
+
+    function setupCanvas() {
+        canvas = document.getElementById('sketch-canvas');
+        ctx = canvas.getContext('2d');
+        
+        // Set canvas dimensions to fit the container dynamically
+        const container = document.getElementById('canvas-container');
+        canvas.width = container.clientWidth;
+        canvas.height = 300; // Fixed height for a comfortable drawing area
+
+        ctx.lineWidth = penSize;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#000000'; // Black color for drawing
+
+        // Event listeners - only add once
+        if (!canvas.listenersAdded) {
+            canvas.addEventListener('mousedown', (e) => startDrawing(e, false));
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch events
+            canvas.addEventListener('touchstart', (e) => startDrawing(e, true));
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+            canvas.listenersAdded = true;
+        }
+        
+        // Update pen size dynamically
+        document.getElementById('pen-size').oninput = function(e) {
+            penSize = parseInt(e.target.value);
+            ctx.lineWidth = penSize;
+            document.getElementById('pen-size-value').textContent = penSize;
+        };
+
+        // Initial clear to ensure white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function startDrawing(e, isTouch) {
+        isDrawing = true;
+        [lastX, lastY] = getCoords(e, isTouch);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault(); // Prevent scrolling on touch
+        const [currentX, currentY] = getCoords(e, e.touches && e.touches.length > 0);
+
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(currentX, currentY);
+        ctx.stroke();
+        [lastX, lastY] = [currentX, currentY];
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+    }
+    
+    function getCoords(e, isTouch) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+
+        if (isTouch) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        
+        return [
+            clientX - rect.left,
+            clientY - rect.top
+        ];
+    }
+    
+    window.resetCanvas = function() {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('sketch-solution').innerHTML = '<p class="text-center text-gray-400">সমাধান এখানে দেখানো হবে।</p>';
+        showModal("বোর্ড পরিষ্কার", "স্মার্ট বোর্ডটি পরিষ্কার করা হয়েছে।", false);
+    }
+
+    window.saveCanvas = function() {
+        try {
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sketch_math_problem.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showModal("স্কেচ সেভ", "আপনার স্কেচটি সেভ করা হয়েছে।", false);
+        } catch (e) {
+            showModal("সেভ ত্রুটি", "স্কেচ সেভ করতে সমস্যা হয়েছে।", true);
+        }
+    }
+    
+    // Make functions globally accessible
+    window.switchTab = switchTab;
+    window.solveTextMath = solveTextMath;
+    window.solveSketchMath = solveSketchMath;
+    window.closeModal = closeModal;
+
+    // --- Initial Setup on Load ---
+    window.onload = function() {
+        initFirebase();
+        setupCanvas();
+        switchTab('text'); // Ensure correct tab is active on load
+    };
+
+    // Re-render canvas on window resize
+    window.addEventListener('resize', () => {
+        if (currentTab === 'sketch') {
+            // Re-setup canvas to maintain aspect ratio/fit container on resize
+            setupCanvas(); 
+        }
+    });
+
+</script>
+
+<!-- ⚙️ Settings Button (Bottom Left) -->
+<footer id="dev-settings-footer">
+  <button id="settings-btn" title="Developer Settings">⚙️</button>
+</footer>
+
+<!-- 🌙 Popup -->
+<div id="settings-popup">
+  <div class="popup-card">
+    <span class="popup-close">&times;</span>
+    <h2>Developer Info</h2>
+    <p><strong>Mingo</strong></p>
+    <p class="tagline">Powerfull Math Solver • Clean Design</p>
+
+    <div class="social-links">
+      <a href="https://mingo-calculetor.vercel.app" target="_blank">🌐 Facebook</a>
+      <a href="https://mingo-calculetor.vercel.app" target="_blank">▶️ YouTube</a>
+      <a href="https://mingo-calculetor.vercel.app" target="_blank">💻 Website</a>
+    </div>
+
+    <div class="version-box">
+      <p><strong>Current Version:</strong> v2.0.0</p>
+      <a href="https://mingo-calculetor.vercel.app/versions.html" target="_blank" class="update-btn">Check Update Version</a>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* 🌿 Footer Settings Icon */
+  #dev-settings-footer {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    z-index: 1000;
+  }
+
+  #settings-btn {
+    background: #0f1220;
+    border: 1px solid #1b1f2f;
+    color: #00ff84;
+    font-size: 18px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  #settings-btn:hover {
+    background: #1b1f2f;
+    transform: rotate(30deg);
+  }
+
+  /* 🌌 Popup overlay */
+  #settings-popup {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 18, 32, 0.85);
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+
+  /* 💎 Popup card */
+  .popup-card {
+    background: #1b1f2f;
+    border-radius: 12px;
+    padding: 25px 30px;
+    width: 300px;
+    max-width: 90%;
+    text-align: center;
+    color: #e0e0e0;
+    font-family: "Poppins", sans-serif;
+    position: relative;
+    box-shadow: 0 0 10px rgba(0, 255, 132, 0.15);
+    animation: fadeIn 0.25s ease;
+  }
+
+  .popup-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #00ff84;
+  }
+
+  .popup-close:hover {
+    color: #00d26a;
+    transform: scale(1.1);
+  }
+
+  .popup-card h2 {
+    font-size: 18px;
+    color: #00ff84;
+    margin-bottom: 5px;
+  }
+
+  .popup-card p {
+    font-size: 14px;
+    color: #ccc;
+    margin: 4px 0;
+  }
+
+  .tagline {
+    font-style: italic;
+    color: #aaa;
+    margin-bottom: 15px;
+  }
+
+  .social-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .social-links a {
+    background: #00ff84;
+    color: #0f1220;
+    font-weight: 500;
+    padding: 7px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.3s;
+  }
+
+  .social-links a:hover {
+    background: #00d26a;
+  }
+
+  .version-box {
+    border-top: 1px solid #2a2e40;
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+
+  .update-btn {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #00ff84;
+    color: #0f1220;
+    border-radius: 6px;
+    font-size: 13px;
+    text-decoration: none;
+    transition: background 0.3s;
+  }
+
+  .update-btn:hover {
+    background: #00d26a;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+</style>
+
+<script>
+  const settingsBtn = document.getElementById('settings-btn');
+  const settingsPopup = document.getElementById('settings-popup');
+  const popupClose = document.querySelector('.popup-close');
+
+  settingsBtn.addEventListener('click', () => settingsPopup.style.display = 'flex');
+  popupClose.addEventListener('click', () => settingsPopup.style.display = 'none');
+  settingsPopup.addEventListener('click', e => {
+    if (e.target === settingsPopup) settingsPopup.style.display = 'none';
+  });
+</script>
+
+
+</body>
+</html>
